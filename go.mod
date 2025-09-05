@@ -1,4 +1,4 @@
-module gofatqr
+module github.com/ESilva15/gofatqr
 
 go 1.24.6
 
