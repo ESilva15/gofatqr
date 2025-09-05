@@ -1,7 +1,7 @@
 package gofatqr_test
 
 import (
-	"gofatqr"
+	"github.com/ESilva15/gofatqr"
 	"testing"
 )
 

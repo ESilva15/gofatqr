@@ -641,8 +641,7 @@ func (fq *FatQR) scanParts(parts []string) error {
 	return nil
 }
 
-// TODO
-// Use flags like STRICT | VALIDATE to do conditional stuff
+// Scan scans a given string and applies the rules of `mode` (to be defined)
 func (fq *FatQR) Scan(s string, mode ScanMode) error {
 	parts := strings.Split(s, "*")
 
