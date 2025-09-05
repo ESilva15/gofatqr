@@ -1,0 +1,806 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>gofatqr: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">gofatqr/fatQR.go (97.1%)</option>
+				
+				<option value="file1">gofatqr/main.go (0.0%)</option>
+				
+				<option value="file2">gofatqr/nif.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package gofatqr
+
+// TODO
+// Check what we can take form SAF-T to put here, maybe work on a SAF-T
+// implementation too, who knows amirite
+
+import (
+        "fmt"
+        "strconv"
+        "strings"
+        "time"
+
+        dec "github.com/shopspring/decimal"
+)
+
+type FiscalSpace struct {
+        TaxCountryRegion        string       // 1 - fiscal space
+        TaxableBase             *dec.Decimal // 2
+        TaxableReduced          *dec.Decimal // 3
+        VatTotalReducedTax      *dec.Decimal // 4
+        TaxableIntermediateBase *dec.Decimal // 5
+        VatTotalIntermediateTax *dec.Decimal // 6
+        TaxableNormalBase       *dec.Decimal // 7
+        VatTotalNormalBase      *dec.Decimal // 8
+}
+
+type FatQR struct {
+        TaxRegistrationNumber     string       // A
+        CustomerTaxID             string       // B
+        Country                   string       // C customer country ISO 3166-1 alpha2
+        InvoiceType               string       // D
+        InvoiceStatus             string       // E
+        InvoiceDate               time.Time    // F
+        InvoiceNo                 string       // G
+        ATCUD                     string       // H
+        IFiscalSpace              FiscalSpace  // I1-I8
+        JFiscalSpace              FiscalSpace  // I1-I8
+        KFiscalSpace              FiscalSpace  // I1-I8
+        NotTaxable                *dec.Decimal // L
+        StampDuty                 *dec.Decimal // M "Imposto de Selo"
+        TaxPayable                *dec.Decimal // N
+        GrossTotal                *dec.Decimal // O
+        WithholdingTaxAmount      *dec.Decimal // P
+        HashQuartet               string       // Q
+        SoftwareCertificateNumber int64        // R
+        OtherInfo                 string       // S
+}
+
+type FieldCodec struct {
+        Required bool
+        Parse    func(f *FatQR, val string) error
+        String   func(f *FatQR) string
+        Empty    func(f *FatQR) bool
+}
+
+var (
+        fieldOrder = []string{
+                "A", "B", "C", "D", "E", "F", "G", "H",
+                "I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8",
+                "J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8",
+                "K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8",
+                "L", "M", "N", "O", "P", "Q", "R", "S",
+        }
+        // lastKey = fieldOrder[len(fieldOrder)-1]
+)
+
+const (
+        decCount  = 2
+        separator = "*"
+)
+
+var fatQRFieldMap = map[string]FieldCodec{
+        "A": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        // if !isValidNIF(val) {
+                        //         return fmt.Errorf("invalid NIF `%s`", val)
+                        // }
+
+                        f.TaxRegistrationNumber = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "A:" + f.TaxRegistrationNumber
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.TaxRegistrationNumber == ""
+                }</span>,
+        },
+        "B": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        // if !isValidNIF(val) {
+                        //         return fmt.Errorf("invalid NIF `%s`", val)
+                        // }
+
+                        f.CustomerTaxID = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "B:" + f.CustomerTaxID
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.CustomerTaxID == ""
+                }</span>,
+        },
+        "C": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        // We can use biter777/countries package around here for verification
+                        // but this comes from a code, so eeehhh
+                        f.Country = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "C:" + f.Country
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.Country == ""
+                }</span>,
+        },
+        "D": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.InvoiceType = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "D:" + f.InvoiceType
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.InvoiceType == ""
+                }</span>,
+        },
+        "E": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.InvoiceStatus = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "E:" + f.InvoiceStatus
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.InvoiceStatus == ""
+                }</span>,
+        },
+        "F": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        tz, err := time.LoadLocation("Europe/Lisbon")
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        <span class="cov8" title="1">f.InvoiceDate, err = time.ParseInLocation("20060102", val, tz)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        <span class="cov8" title="1">return nil</span>
+                },
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "F:" + f.InvoiceDate.Format("20060102")
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.InvoiceStatus == ""
+                }</span>,
+        },
+        "G": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.InvoiceNo = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "G:" + f.InvoiceNo
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.InvoiceNo == ""
+                }</span>,
+        },
+        "H": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        // TODO
+                        // Add some ATCUD validation
+                        f.ATCUD = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "H:" + f.ATCUD
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.ATCUD == ""
+                }</span>,
+        },
+        "I1": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.IFiscalSpace.TaxCountryRegion = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I1:" + f.IFiscalSpace.TaxCountryRegion
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.TaxCountryRegion == ""
+                }</span>,
+        },
+        "I2": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.TaxableBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I2:" + stringDecimal(f.IFiscalSpace.TaxableBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.TaxableBase == nil
+                }</span>,
+        },
+        "I3": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.TaxableReduced, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I3:" + stringDecimal(f.IFiscalSpace.TaxableReduced)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.TaxableReduced == nil
+                }</span>,
+        },
+        "I4": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.VatTotalReducedTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I4:" + stringDecimal(f.IFiscalSpace.VatTotalReducedTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.VatTotalReducedTax == nil
+                }</span>,
+        },
+        "I5": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.TaxableIntermediateBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I5:" + stringDecimal(f.IFiscalSpace.TaxableIntermediateBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.TaxableIntermediateBase == nil
+                }</span>,
+        },
+        "I6": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.VatTotalIntermediateTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I6:" + stringDecimal(f.IFiscalSpace.VatTotalIntermediateTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.VatTotalIntermediateTax == nil
+                }</span>,
+        },
+        "I7": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.TaxableNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I7:" + stringDecimal(f.IFiscalSpace.TaxableNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.TaxableNormalBase == nil
+                }</span>,
+        },
+        "I8": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.IFiscalSpace.VatTotalNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "I8:" + stringDecimal(f.IFiscalSpace.VatTotalNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.IFiscalSpace.VatTotalNormalBase == nil
+                }</span>,
+        },
+        "J1": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.JFiscalSpace.TaxCountryRegion = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J1:" + f.JFiscalSpace.TaxCountryRegion
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.TaxCountryRegion == ""
+                }</span>,
+        },
+        "J2": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.TaxableBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J2:" + stringDecimal(f.JFiscalSpace.TaxableBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.TaxableBase == nil
+                }</span>,
+        },
+        "J3": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.TaxableReduced, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J3:" + stringDecimal(f.JFiscalSpace.TaxableReduced)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.TaxableReduced == nil
+                }</span>,
+        },
+        "J4": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.VatTotalReducedTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J4:" + stringDecimal(f.JFiscalSpace.VatTotalReducedTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.VatTotalReducedTax == nil
+                }</span>,
+        },
+        "J5": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.TaxableIntermediateBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J5:" + stringDecimal(f.JFiscalSpace.TaxableIntermediateBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.TaxableIntermediateBase == nil
+                }</span>,
+        },
+        "J6": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.VatTotalIntermediateTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J6:" + stringDecimal(f.JFiscalSpace.VatTotalIntermediateTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.VatTotalIntermediateTax == nil
+                }</span>,
+        },
+        "J7": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.TaxableNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J7:" + stringDecimal(f.JFiscalSpace.TaxableNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.TaxableNormalBase == nil
+                }</span>,
+        },
+        "J8": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.JFiscalSpace.VatTotalNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "J8:" + stringDecimal(f.JFiscalSpace.VatTotalNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.JFiscalSpace.VatTotalNormalBase == nil
+                }</span>,
+        },
+        "K1": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.KFiscalSpace.TaxCountryRegion = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K1:" + f.KFiscalSpace.TaxCountryRegion
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.TaxCountryRegion == ""
+                }</span>,
+        },
+        "K2": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.TaxableBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K2:" + stringDecimal(f.KFiscalSpace.TaxableBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.TaxableNormalBase == nil
+                }</span>,
+        },
+        "K3": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.TaxableReduced, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K3:" + stringDecimal(f.KFiscalSpace.TaxableReduced)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.TaxableReduced == nil
+                }</span>,
+        },
+        "K4": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.VatTotalReducedTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K4:" + stringDecimal(f.KFiscalSpace.VatTotalReducedTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.VatTotalReducedTax == nil
+                }</span>,
+        },
+        "K5": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.TaxableIntermediateBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K5:" + stringDecimal(f.KFiscalSpace.TaxableIntermediateBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.TaxableIntermediateBase == nil
+                }</span>,
+        },
+        "K6": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.VatTotalIntermediateTax, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K6:" + stringDecimal(f.KFiscalSpace.VatTotalIntermediateTax)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.VatTotalIntermediateTax == nil
+                }</span>,
+        },
+        "K7": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.TaxableNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K7:" + stringDecimal(f.KFiscalSpace.TaxableNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.TaxableNormalBase == nil
+                }</span>,
+        },
+        "K8": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.KFiscalSpace.VatTotalNormalBase, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "K8:" + stringDecimal(f.KFiscalSpace.VatTotalNormalBase)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.KFiscalSpace.VatTotalNormalBase == nil
+                }</span>,
+        },
+        "L": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.NotTaxable, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "L:" + stringDecimal(f.NotTaxable)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.NotTaxable == nil
+                }</span>,
+        },
+        "M": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.StampDuty, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "M:" + stringDecimal(f.StampDuty)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.StampDuty == nil
+                }</span>,
+        },
+        "N": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.TaxPayable, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "N:" + stringDecimal(f.TaxPayable)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.TaxPayable == nil
+                }</span>,
+        },
+        "O": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.GrossTotal, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "O:" + stringDecimal(f.GrossTotal)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.GrossTotal == nil
+                }</span>,
+        },
+        "P": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        return parseDecimal(&amp;f.WithholdingTaxAmount, val)
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "P:" + stringDecimal(f.WithholdingTaxAmount)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.WithholdingTaxAmount == nil
+                }</span>,
+        },
+        "Q": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.HashQuartet = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "Q:" + f.HashQuartet
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.HashQuartet == ""
+                }</span>,
+        },
+        "R": {
+                Required: true,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        var err error
+                        f.SoftwareCertificateNumber, err = strconv.ParseInt(val, 10, 16)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        <span class="cov8" title="1">return nil</span>
+                },
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "R:" + fmt.Sprintf("%04d", f.SoftwareCertificateNumber)
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.SoftwareCertificateNumber &lt; 1
+                }</span>,
+        },
+        "S": {
+                Required: false,
+                Parse: func(f *FatQR, val string) error <span class="cov8" title="1">{
+                        f.OtherInfo = val
+                        return nil
+                }</span>,
+                String: func(f *FatQR) string <span class="cov8" title="1">{
+                        return "S:" + f.OtherInfo
+                }</span>,
+                Empty: func(f *FatQR) bool <span class="cov8" title="1">{
+                        return f.OtherInfo == ""
+                }</span>,
+        },
+}
+
+func parseDecimal(f **dec.Decimal, val string) error <span class="cov8" title="1">{
+        if *f == nil </span><span class="cov8" title="1">{
+                *f = new(dec.Decimal)
+        }</span>
+        <span class="cov8" title="1">return (*f).Scan(val)</span>
+}
+
+func stringDecimal(d *dec.Decimal) string <span class="cov8" title="1">{
+        return d.Truncate(decCount).StringFixed(decCount)
+}</span>
+
+func (fq *FatQR) scanPart(part []string) error <span class="cov8" title="1">{
+        val, ok := fatQRFieldMap[part[0]]
+        if !ok </span><span class="cov8" title="1">{
+                return fmt.Errorf("invalid key `%s`", part[0])
+        }</span>
+
+        <span class="cov8" title="1">err := val.Parse(fq, part[1])
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (fq *FatQR) scanParts(parts []string) error <span class="cov8" title="1">{
+        for k := range parts </span><span class="cov8" title="1">{
+                keyValuePair := strings.Split(parts[k], ":")
+                if len(keyValuePair) != 2 </span><span class="cov8" title="1">{
+                        return fmt.Errorf("failed to parse key value pair: %s", parts[k])
+                }</span>
+
+                <span class="cov8" title="1">err := fq.scanPart(keyValuePair)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// TODO
+// Use flags like STRICT | VALIDATE to do conditional stuff
+func (fq *FatQR) Scan(s string) error <span class="cov8" title="1">{
+        parts := strings.Split(s, "*")
+
+        err := fq.scanParts(parts)
+        if err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (fq *FatQR) String() string <span class="cov8" title="1">{
+        parts := make([]string, 0, len(fieldOrder))
+
+        for _, key := range fieldOrder </span><span class="cov8" title="1">{
+                codec, ok := fatQRFieldMap[key]
+                if !ok </span><span class="cov8" title="1">{
+                        panic("invalid key in order")</span>
+                }
+
+                // TODO
+                // Using the flags I have to add, use it to enforce or not obligatory fields
+                // For now we are only going to stringify the data we have
+                <span class="cov8" title="1">if !codec.Empty(fq) </span><span class="cov8" title="1">{
+                        parts = append(parts, codec.String(fq))
+                }</span>
+        }
+
+        <span class="cov8" title="1">return strings.Join(parts, separator)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package gofatqr
+
+func Parse(data string) {<span class="cov0" title="0">
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package gofatqr
+
+import (
+        "unicode"
+)
+
+// TODO
+// Add a way to check with an API or whatever like nif.pt
+// Also need to be able to indentify other countries NIFs I guess
+// some validation at the end
+
+func isValidNIF(n string) bool <span class="cov8" title="1">{
+        if len(n) != 9 </span><span class="cov8" title="1">{
+                return false
+        }</span>
+
+        <span class="cov8" title="1">for _, c := range n </span><span class="cov8" title="1">{
+                if !unicode.IsDigit(c) </span><span class="cov8" title="1">{
+                        return false
+                }</span>
+        }
+
+        <span class="cov8" title="1">return true</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
