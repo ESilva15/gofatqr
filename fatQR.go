@@ -627,7 +627,7 @@ func (fq *FatQR) scanPart(part []string) error {
 
 func (fq *FatQR) scanParts(parts []string) error {
 	for k := range parts {
-		keyValuePair := strings.Split(parts[k], ":")
+		keyValuePair := strings.SplitN(parts[k], ":", 2)
 		if len(keyValuePair) != 2 {
 			return fmt.Errorf("failed to parse key value pair: %s", parts[k])
 		}
