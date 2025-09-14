@@ -5,6 +5,7 @@ package gofatqr
 // implementation too, who knows amirite
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,37 +22,42 @@ const (
 	NifValidation
 )
 
+const (
+	decCount  = 2
+	separator = "*"
+)
+
 type FiscalSpace struct {
-	TaxCountryRegion        string       // 1 - fiscal space
-	TaxableBase             *dec.Decimal // 2
-	TaxableReduced          *dec.Decimal // 3
-	VatTotalReducedTax      *dec.Decimal // 4
-	TaxableIntermediateBase *dec.Decimal // 5
-	VatTotalIntermediateTax *dec.Decimal // 6
-	TaxableNormalBase       *dec.Decimal // 7
-	VatTotalNormalBase      *dec.Decimal // 8
+	TaxCountryRegion        string       `json:"TaxCountryRegion"`        // 1
+	TaxableBase             *dec.Decimal `json:"TaxableBase"`             // 2
+	TaxableReduced          *dec.Decimal `json:"TaxableReduced"`          // 3
+	VatTotalReducedTax      *dec.Decimal `json:"VatTotalReducedTax"`      // 4
+	TaxableIntermediateBase *dec.Decimal `json:"TaxableIntermediateBase"` // 5
+	VatTotalIntermediateTax *dec.Decimal `json:"VatTotalIntermediateTax"` // 6
+	TaxableNormalBase       *dec.Decimal `json:"TaxableNormalBase"`       // 7
+	VatTotalNormalBase      *dec.Decimal `json:"VatTotalNormalBase"`      // 8
 }
 
 type FatQR struct {
-	TaxRegistrationNumber     string       // A
-	CustomerTaxID             string       // B
-	Country                   string       // C customer country ISO 3166-1 alpha2
-	InvoiceType               string       // D
-	InvoiceStatus             string       // E
-	InvoiceDate               time.Time    // F
-	InvoiceNo                 string       // G
-	ATCUD                     string       // H
-	IFiscalSpace              FiscalSpace  // I1-I8
-	JFiscalSpace              FiscalSpace  // I1-I8
-	KFiscalSpace              FiscalSpace  // I1-I8
-	NotTaxable                *dec.Decimal // L
-	StampDuty                 *dec.Decimal // M "Imposto de Selo"
-	TaxPayable                *dec.Decimal // N
-	GrossTotal                *dec.Decimal // O
-	WithholdingTaxAmount      *dec.Decimal // P
-	HashQuartet               string       // Q
-	SoftwareCertificateNumber int64        // R
-	OtherInfo                 string       // S
+	TaxRegistrationNumber string       `json:"TaxRegistrationNumber"` // A
+	CustomerTaxID         string       `json:"CustomerTaxID"`         // B
+	Country               string       `json:"Country"`               // C country ISO 3166-1 alpha2
+	InvoiceType           string       `json:"InvoiceType"`           // D
+	InvoiceStatus         string       `json:"InvoiceStatus"`         // E
+	InvoiceDate           time.Time    `json:"InvoiceDate"`           // F
+	InvoiceNo             string       `json:"InvoiceNo"`             // G
+	ATCUD                 string       `json:"ATCUD"`                 // H
+	IFiscalSpace          FiscalSpace  `json:"IFiscalSpace"`          // I1-I8
+	JFiscalSpace          FiscalSpace  `json:"JFiscalSpace"`          // I1-I8
+	KFiscalSpace          FiscalSpace  `json:"KFiscalSpace"`          // I1-I8
+	NotTaxable            *dec.Decimal `json:"NotTaxable"`            // L
+	StampDuty             *dec.Decimal `json:"StampDuty"`             // M "Imposto de Selo"
+	TaxPayable            *dec.Decimal `json:"TaxPayable"`            // N
+	GrossTotal            *dec.Decimal `json:"GrossTotal"`            // O
+	WithholdingTaxAmount  *dec.Decimal `json:"WithholdingTaxAmount"`  // P
+	HashQuartet           string       `json:"HashQuartet"`           // Q
+	SWCertNo              int64        `json:"SWCertNo"`              // R
+	OtherInfo             string       `json:"OtherInfo"`             // S
 }
 
 type FieldCodec struct {
@@ -69,12 +75,6 @@ var (
 		"K1", "K2", "K3", "K4", "K5", "K6", "K7", "K8",
 		"L", "M", "N", "O", "P", "Q", "R", "S",
 	}
-	// lastKey = fieldOrder[len(fieldOrder)-1]
-)
-
-const (
-	decCount  = 2
-	separator = "*"
 )
 
 var fatQRFieldMap = map[string]FieldCodec{
@@ -571,7 +571,7 @@ var fatQRFieldMap = map[string]FieldCodec{
 		Required: true,
 		Parse: func(f *FatQR, val string) error {
 			var err error
-			f.SoftwareCertificateNumber, err = strconv.ParseInt(val, 10, 16)
+			f.SWCertNo, err = strconv.ParseInt(val, 10, 16)
 			if err != nil {
 				return err
 			}
@@ -579,10 +579,10 @@ var fatQRFieldMap = map[string]FieldCodec{
 			return nil
 		},
 		String: func(f *FatQR) string {
-			return "R:" + fmt.Sprintf("%04d", f.SoftwareCertificateNumber)
+			return "R:" + fmt.Sprintf("%04d", f.SWCertNo)
 		},
 		Empty: func(f *FatQR) bool {
-			return f.SoftwareCertificateNumber < 1
+			return f.SWCertNo < 1
 		},
 	},
 	"S": {
@@ -609,6 +609,15 @@ func parseDecimal(f **dec.Decimal, val string) error {
 
 func stringDecimal(d *dec.Decimal) string {
 	return d.Truncate(decCount).StringFixed(decCount)
+}
+
+func (fq *FatQR) ToJSON() []byte {
+	jsondata, _ := json.Marshal(fq)
+	return jsondata
+}
+
+func (fq *FatQR) FromJSON(data []byte) error {
+	return json.Unmarshal(data, fq)
 }
 
 func (fq *FatQR) scanPart(part []string) error {
