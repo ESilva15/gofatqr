@@ -1,0 +1,12 @@
+version: "2"
+linters:
+  default: all
+  disable:
+    - wsl
+    - depguard
+    - varnamelen
+    - wrapcheck
+    - wsl_v5
+    - exhaustruct
+    - gochecknoglobals
+    - nlreturn

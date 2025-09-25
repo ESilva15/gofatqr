@@ -1,3 +1,7 @@
+// Package gofatqr offers a way to parse the QR code string from a portuguese
+// invoice. It's up to date with the tech specs
+// 'Portaria nº 195/2025 Versão 1.1 Outubro 2020'
+// https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Novas_regras_faturacao/Documents/Especificacoes_Tecnicas_Codigo_QR.pdf
 package gofatqr
 
 // TODO
@@ -14,9 +18,11 @@ import (
 	dec "github.com/shopspring/decimal"
 )
 
+// ScanMode defines the type used to configure stricter scanning and parsing of
+// the code.
 type ScanMode uint32
 
-// Setting this up for the future
+// Setting this up for the future.
 const (
 	Strict ScanMode = 1 << iota
 	NifValidation
@@ -27,6 +33,7 @@ const (
 	separator = "*"
 )
 
+// FiscalSpace Represents the each of the fiscal zones the invoice can have.
 type FiscalSpace struct {
 	TaxCountryRegion        string       `json:"TaxCountryRegion"`        // 1
 	TaxableBase             *dec.Decimal `json:"TaxableBase"`             // 2
@@ -38,6 +45,7 @@ type FiscalSpace struct {
 	VatTotalNormalBase      *dec.Decimal `json:"VatTotalNormalBase"`      // 8
 }
 
+// FatQR represents the data from the QR code of an invoice.
 type FatQR struct {
 	TaxRegistrationNumber string       `json:"TaxRegistrationNumber"` // A
 	CustomerTaxID         string       `json:"CustomerTaxID"`         // B
@@ -60,7 +68,7 @@ type FatQR struct {
 	OtherInfo             string       `json:"OtherInfo"`             // S
 }
 
-type FieldCodec struct {
+type fieldCodec struct {
 	Required bool
 	Parse    func(f *FatQR, val string) error
 	String   func(f *FatQR) string
@@ -77,7 +85,7 @@ var (
 	}
 )
 
-var fatQRFieldMap = map[string]FieldCodec{
+var fatQRFieldMap = map[string]fieldCodec{
 	"A": {
 		Required: true,
 		Parse: func(f *FatQR, val string) error {
@@ -191,8 +199,7 @@ var fatQRFieldMap = map[string]FieldCodec{
 	"H": {
 		Required: true,
 		Parse: func(f *FatQR, val string) error {
-			// TODO
-			// Add some ATCUD validation
+			// TODO - add some ATCUD validation
 			f.ATCUD = val
 			return nil
 		},
@@ -604,6 +611,10 @@ func parseDecimal(f **dec.Decimal, val string) error {
 	if *f == nil {
 		*f = new(dec.Decimal)
 	}
+
+	// Because software #2426 doesn't follow the spec correctly
+	val = strings.ReplaceAll(val, ",", ".")
+
 	return (*f).Scan(val)
 }
 
@@ -611,13 +622,49 @@ func stringDecimal(d *dec.Decimal) string {
 	return d.Truncate(decCount).StringFixed(decCount)
 }
 
+// ToJSON returns a []byte with the FatQR data as JSON.
 func (fq *FatQR) ToJSON() []byte {
 	jsondata, _ := json.Marshal(fq)
 	return jsondata
 }
 
+// FromJSON scans the data from a JSON []byte.
 func (fq *FatQR) FromJSON(data []byte) error {
 	return json.Unmarshal(data, fq)
+}
+
+// Scan scans a given string and applies the rules of `mode` (to be defined).
+//
+// returns an error if it fails to scan the given string.
+func (fq *FatQR) Scan(s string, _ ScanMode) error {
+	parts := strings.Split(s, "*")
+
+	err := fq.scanParts(parts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (fq *FatQR) String() string {
+	parts := make([]string, 0, len(fieldOrder))
+
+	for _, key := range fieldOrder {
+		codec, ok := fatQRFieldMap[key]
+		if !ok {
+			panic("invalid key in order")
+		}
+
+		// TODO
+		// Using the flags I have to add, use it to enforce or not obligatory fields
+		// For now we are only going to stringify the data we have
+		if !codec.Empty(fq) {
+			parts = append(parts, codec.String(fq))
+		}
+	}
+
+	return strings.Join(parts, separator)
 }
 
 func (fq *FatQR) scanPart(part []string) error {
@@ -648,36 +695,4 @@ func (fq *FatQR) scanParts(parts []string) error {
 	}
 
 	return nil
-}
-
-// Scan scans a given string and applies the rules of `mode` (to be defined)
-func (fq *FatQR) Scan(s string, mode ScanMode) error {
-	parts := strings.Split(s, "*")
-
-	err := fq.scanParts(parts)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (fq *FatQR) String() string {
-	parts := make([]string, 0, len(fieldOrder))
-
-	for _, key := range fieldOrder {
-		codec, ok := fatQRFieldMap[key]
-		if !ok {
-			panic("invalid key in order")
-		}
-
-		// TODO
-		// Using the flags I have to add, use it to enforce or not obligatory fields
-		// For now we are only going to stringify the data we have
-		if !codec.Empty(fq) {
-			parts = append(parts, codec.String(fq))
-		}
-	}
-
-	return strings.Join(parts, separator)
 }
